@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lakdi Billing Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  /* --- CRITICAL RESET --- */
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg-main: #121212; --bg-panel: #1e1e1e; --bg-input: #2d2d2d; --border-color: #333333;
+    --text-main: #ffffff; --text-muted: #a0a0a0;
+    --primary: #3b82f6; --primary-hover: #2563eb; --danger: #ef4444; --success: #10b981;
+    --radius: 10px; --shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.6);
+  }
+
+  body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-main); color: var(--text-main); text-align: center; padding-bottom: 70px; min-height: 100vh; overflow-x: hidden; width: 100%; }
+
+  header { padding: 20px 25px; background: var(--bg-panel); border-bottom: 1px solid var(--border-color); margin-bottom: 20px; display: flex; align-items: center; justify-content: center; position: relative; }
+  h1 { margin: 0; font-size: 18px; font-weight: 600; flex-grow: 1; letter-spacing: 0.5px; }
+  
+  .back-btn { position: absolute; left: 15px; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: var(--radius); font-size: 13px; cursor: pointer; display: none; }
+  
+  /* --- NEW LANG BUTTON --- */
+  .lang-btn { position: absolute; right: 15px; background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 6px 12px; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.1s; }
+  .lang-btn:active { background: rgba(59, 130, 246, 0.1); }
+
+  .page-view { display: none; width: 100%; animation: fadeIn 0.2s ease-in-out forwards; }
+  .page-view.active { display: block; }
+  @keyframes fadeIn { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+
+  .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 10px 20px; max-width: 600px; margin: 0 auto; width: 100%; }
+  .menu-card { background: var(--bg-panel); border: 1px solid var(--border-color); padding: 25px 15px; border-radius: var(--radius); color: var(--text-main); font-size: 15px; font-weight: 500; cursor: pointer; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; gap: 12px; transition: background 0.1s, transform 0.1s; }
+  .menu-card:active { background: var(--bg-input); transform: scale(0.98); }
+  .menu-icon { font-size: 28px; }
+
+  .controls { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; padding: 0 15px; width: 100%; }
+  input[type="date"] { padding: 10px 14px; border-radius: var(--radius); border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-family: inherit; font-size: 14px; }
+  ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+  .icon-btn { background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 14px; border-radius: var(--radius); cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: background 0.1s; }
+  .icon-btn:active { background: var(--bg-input); }
+  .today-btn { background: var(--primary); border-color: var(--primary); color: white; display: none; }
+  .today-btn:active { background: var(--primary-hover); }
+  #lockedMessage { display: none; background: rgba(239, 68, 68, 0.15); color: #fca5a5; padding: 12px; margin: 0 20px 15px 20px; border-radius: var(--radius); border: 1px solid var(--danger); font-size: 13px; }
+  .disabled-area { opacity: 0.6; pointer-events: none; filter: grayscale(100%); }
+
+  .table-container { overflow-x: hidden; margin: 15px auto; background: var(--bg-panel); padding: 15px 10px; border-radius: var(--radius); border: 1px solid var(--border-color); width: calc(100% - 30px); max-width: 600px; box-shadow: var(--shadow); }
+  .table-container h3 { margin-top: 0; text-align: left; font-size: 16px; font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 15px; }
+  .selection-bar { display: none; background: var(--bg-input); border: 1px solid var(--primary); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 15px; justify-content: space-between; align-items: center; }
+  .sel-stat { display: flex; flex-direction: column; align-items: center; }
+  .sel-stat span.lbl { font-size: 10px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+  .sel-stat span.val { font-size: 14px; font-weight: 600; color: var(--text-main); margin-top: 2px; }
+  .sel-stat.price-stat span.val { color: var(--primary); font-size: 15px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+  th, td { padding: 10px 4px; border-bottom: 1px solid var(--border-color); word-wrap: break-word; vertical-align: middle; }
+  th { font-weight: 600; color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
+  th:nth-child(1), td:nth-child(1) { width: 10%; text-align: center; } 
+  th:nth-child(2), td:nth-child(2) { width: 22%; font-size: 11px; text-align: center; } 
+  th:nth-child(3), td:nth-child(3) { width: 40%; font-size: 11px; line-height: 1.3; font-weight: 500; text-align: left; } 
+  th:nth-child(4), td:nth-child(4) { width: 18%; text-align: right; font-weight: 600; color: var(--primary); } 
+  th:nth-child(5), td:nth-child(5) { width: 10%; text-align: center; } 
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+  tbody tr.selected { background: rgba(59, 130, 246, 0.15); }
+  .delete-row-btn { background: transparent; border: none; color: var(--danger); width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: opacity 0.1s; padding: 0; }
+  .delete-row-btn:active { opacity: 0.5; }
+  input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; margin: 0; }
+
+  .page-content { padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; }
+  .input-group { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 20px; width: 100%; }
+  input[type="text"], input[type="number"] { flex: 1; width: 100%; padding: 14px; font-size: 15px; border-radius: var(--radius); border: 1px solid var(--border-color); text-align: left; outline: none; font-family: inherit; background: var(--bg-input); color: var(--text-main); transition: border-color 0.2s; }
+  input[type="text"]:focus, input[type="number"]:focus { border-color: var(--primary); }
+  .input-3 input { padding: 12px 8px; font-size: 14px; text-align: center; }
+  
+  .action-btn { width: 100%; padding: 16px; font-size: 16px; font-weight: 600; border: none; border-radius: var(--radius); color: white; cursor: pointer; background: var(--primary); margin-top: 5px; transition: background 0.1s; }
+  .action-btn:active { background: var(--primary-hover); }
+
+  .grid-buttons-page { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; }
+  .sale-btn { padding: 20px 10px; font-size: 18px; font-weight: 600; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--bg-panel); color: var(--text-main); display: flex; flex-direction: column; align-items: center; position: relative; transition: background 0.1s, border-color 0.1s; }
+  .sale-btn:active { background: var(--bg-input); }
+  .sale-btn span.price { font-size: 13px; color: var(--text-muted); margin-top: 6px; font-weight: 400; }
+  .sale-btn .delete-preset { position: absolute; top: -8px; right: -8px; background: var(--danger); width: 24px; height: 24px; border-radius: 50%; color: white; font-size: 12px; display: none; line-height: 24px; border: 2px solid var(--bg-main); }
+  .edit-mode .delete-preset { display: block; }
+  .edit-mode .sale-btn { border-color: var(--danger); background: rgba(239, 68, 68, 0.05); }
+
+  .note-list { width: 100%; list-style: none; padding: 0; margin: 0 0 20px 0; }
+  .note-item { background: var(--bg-panel); margin-bottom: 12px; padding: 14px; border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center; font-size: 14px; text-align: left; border: 1px solid var(--border-color); width: 100%; }
+  .note-item span { word-break: break-word; flex-grow: 1; margin-right: 12px; }
+  .delete-note-btn { background: transparent; border: none; color: var(--danger); font-size: 16px; cursor: pointer; padding: 5px; }
+  .note-input-wrapper { display: flex; width: 100%; gap: 12px; }
+  .add-note-btn { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius); color: var(--text-main); width: 55px; font-size: 22px; cursor: pointer; transition: background 0.1s; }
+  .add-note-btn:active { background: var(--bg-input); }
+
+  #toast { visibility: hidden; min-width: 260px; background: var(--primary); color: #fff; text-align: center; border-radius: 50px; padding: 14px 20px; position: fixed; z-index: 110; bottom: 30px; left: 50%; transform: translateX(-50%); font-size: 14px; font-weight: 500; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+  #toast.show { visibility: visible; animation: fadein 0.3s forwards, fadeout 0.3s 2.7s forwards; }
+  @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+  @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+</style>
+</head>
+<body>
+
+
+<header id="app-header">
+  <button id="back-btn" class="back-btn" onclick="goHome()" data-i18n="btnBack">Back</button>
+  <h1 id="page-title" data-i18n="appTitle">Lakdi Billing Pro</h1>
+  <button id="lang-btn" class="lang-btn" onclick="toggleLanguage()" data-i18n="langBtn">हिंदी</button>
+</header>
+
+<div id="page-home" class="page-view active">
+  <div class="controls">
+    <input type="date" id="datePicker" onchange="changeDate()">
+    <button id="todayBtn" class="icon-btn today-btn" onclick="goToToday()" data-i18n="btnToday">Today</button>
+    <button class="icon-btn" onclick="exportData()" data-i18n="btnExport">Export CSV</button>
+  </div>
+  <div id="lockedMessage" data-i18n="lockedMsg">🔒 Read Only: Past records are locked.</div>
+  
+  <div class="menu-grid" id="menuGrid">
+    <button class="menu-card" onclick="openPage('page-quick', 'menuQuick')"><span class="menu-icon">⚡</span> <span data-i18n="menuQuick">Quick Bill</span></button>
+    <button class="menu-card" onclick="openPage('page-manual', 'menuManual')"><span class="menu-icon">✍️</span> <span data-i18n="menuManual">Manual Entry</span></button>
+    <button class="menu-card" onclick="openPage('page-timber', 'menuBatta')"><span class="menu-icon">🪵</span> <span data-i18n="menuBatta">Batta Calc</span></button>
+    <button class="menu-card" onclick="openPage('page-notes', 'menuNotes')"><span class="menu-icon">📝</span> <span data-i18n="menuNotes">Daily Notes</span></button>
+    <button class="menu-card" style="grid-column: span 2; flex-direction:row; justify-content:center; padding: 16px;" onclick="openPage('page-settings', 'menuSettings')"><span class="menu-icon" style="font-size:22px; margin-right:12px;">⚙️</span> <span data-i18n="menuSettings">Manage Presets & Settings</span></button>
+  </div>
+
+  <div class="table-container">
+    <h3 data-i18n="tableTitle">Today's Bill Entries</h3>
+    <div id="selectionSummary" class="selection-bar">
+      <div style="display: flex; gap: 15px; align-items: center;">
+        <div class="sel-stat"><span class="lbl" data-i18n="selSelect">Select</span><span class="val" id="selCount">0</span></div>
+        <div class="sel-stat"><span class="lbl" data-i18n="selTotal">Total</span><span class="val" id="selQty">-</span></div>
+        <div class="sel-stat price-stat"><span class="lbl" data-i18n="selPrice">Price</span><span class="val">₹<span id="selPrice">0</span></span></div>
+      </div>
+      <button onclick="deleteSelectedEntries()" style="background: transparent; color: var(--danger); border: none; padding: 5px; font-size: 16px; cursor: pointer;">❌</button>
+    </div>
+    <table id="recordsTable">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAll()"></th>
+          <th data-i18n="thTime">Time</th>
+          <th data-i18n="thItem">Item/Weight</th>
+          <th data-i18n="thPrice">Price</th>
+          <th data-i18n="thAct">Act</th>
+        </tr>
+      </thead>
+      <tbody id="recordsBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="page-quick" class="page-view">
+  <div class="page-content" id="quickInputArea">
+    <p style="font-size: 14px; color: var(--text-muted); margin-top: 0; margin-bottom: 20px;" data-i18n="quickHint">Tap items repeatedly to add multiples to your bill.</p>
+    <div class="grid-buttons-page" id="buttonGrid"></div>
+  </div>
+</div>
+
+<div id="page-manual" class="page-view">
+  <div class="page-content" id="manualInputArea">
+    <div class="input-group">
+      <input type="text" id="manualKg" data-i18n-ph="phItem" placeholder="Item / Weight (e.g. 10kg)">
+      <input type="text" id="manualPrice" data-i18n-ph="phPrice" placeholder="Price (₹)">
+    </div>
+    <button class="action-btn" onclick="addManualEntry()" data-i18n="btnAddBill">Add to Bill</button>
+  </div>
+</div>
+
+<div id="page-timber" class="page-view">
+  <div class="page-content" id="timberInputArea">
+    <div class="input-group input-3"><input type="number" id="tLen" data-i18n-ph="phLen" placeholder="Len (ft)"><input type="number" id="tWid" data-i18n-ph="phWid" placeholder="Wid (in)"><input type="number" id="tThick" data-i18n-ph="phThick" placeholder="Thick (in)"></div>
+    <div class="input-group"><input type="number" id="tQty" data-i18n-ph="phQty" placeholder="Qty (Pcs)"><input type="number" id="tRate" data-i18n-ph="phRate" placeholder="Rate/Cft"></div>
+    <button class="action-btn" onclick="addTimberEntry()" data-i18n="btnCalc">Calculate & Add</button>
+  </div>
+</div>
+
+<div id="page-notes" class="page-view">
+  <div class="page-content" id="notesInputArea">
+    <ul id="notesListDisplay" class="note-list"></ul>
+    <div class="note-input-wrapper"><input type="text" id="newNoteInput" class="daily-note-input" data-i18n-ph="phNote" placeholder="Type a new remark..."><button class="add-note-btn" onclick="addDailyNote()">+</button></div>
+  </div>
+</div>
+
+<div id="page-settings" class="page-view">
+  <div class="page-content">
+    <div style="background:var(--bg-panel); padding:20px; border-radius:var(--radius); border:1px solid var(--border-color); margin-bottom:20px; width: 100%; text-align:left;">
+      <h3 style="margin-top:0; border-bottom: 1px solid var(--border-color); padding-bottom:12px; font-size: 16px;" data-i18n="titleCreate">Create New Quick Button</h3>
+      <div class="input-group" style="margin-top:15px;"><input type="number" id="createKg" data-i18n-ph="phWeight" placeholder="Weight (KG)"><input type="number" id="createPrice" data-i18n-ph="phPrice" placeholder="Price (₹)"></div>
+      <button class="action-btn" onclick="createCustomButton()" data-i18n="btnSavePreset">Save Preset</button>
+    </div>
+    <div style="background:var(--bg-panel); padding:20px; border-radius:var(--radius); border:1px solid var(--border-color); width: 100%; text-align:left;">
+      <h3 style="margin-top:0; border-bottom: 1px solid var(--border-color); padding-bottom:12px; font-size: 16px;" data-i18n="titleManage">Manage Buttons</h3>
+      <button class="action-btn" style="background: var(--bg-input); border:1px solid var(--border-color); color:var(--text-main); margin-bottom:12px; margin-top:15px;" onclick="toggleEditMode()" data-i18n="btnDelSpec">Delete Specific Buttons</button>
+      <button class="action-btn" style="background:transparent; border:1px solid var(--danger); color:var(--danger);" onclick="resetButtons()" data-i18n="btnReset">Factory Reset All Buttons</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast">Entry Added!</div>
+
+
+<script>// --- TRANSLATION ENGINE ---
+const i18n = {
+  en: {
+    appTitle: "Lakdi Billing Pro", btnBack: "Back", langBtn: "हिंदी",
+    btnToday: "Today", btnExport: "Export CSV", lockedMsg: "🔒 Read Only: Past records are locked.",
+    menuQuick: "Quick Bill", menuManual: "Manual", menuBatta: "Batta Calc", menuNotes: "Daily Notes", menuSettings: "Presets & Settings",
+    tableTitle: "Today's Bill Entries", selSelect: "Select", selTotal: "Total", selPrice: "Price",
+    thTime: "Time", thItem: "Item/Weight", thPrice: "Price", thAct: "Act", quickHint: "Tap items repeatedly to add multiples to your bill.",
+    phItem: "Item / Weight (e.g. 10kg)", phPrice: "Price (₹)", btnAddBill: "Add to Bill",
+    phLen: "Len (ft)", phWid: "Wid (in)", phThick: "Thick (in)", phQty: "Qty (Pcs)", phRate: "Rate/Cft", btnCalc: "Calculate & Add",
+    phNote: "Type a remark...", btnSavePreset: "Save Preset", titleCreate: "Create New Quick Button", phWeight: "Weight (KG)", titleManage: "Manage Buttons", btnDelSpec: "Delete Specific Buttons", btnReset: "Factory Reset All Buttons",
+    noRecords: "No records for this date", noNotes: "No notes yet...",
+    msgLocked: "Locked: Switch to Today", msgAdded: "Added to Bill!", msgErrVal: "Please enter Item/Weight and Price",
+    msgErrBatta: "Please enter Length, Width, Thickness, Rate, and Quantity > 0.", msgPresetSaved: "Preset Saved!",
+    msgErrPreset: "Please enter KG and Price", msgNoteSaved: "Note Saved!", msgDelNote: "Delete this note?",
+    msgDelEntry: "Delete this entry?", msgDelSelected: "Delete selected entries?", msgDelPreset: "Delete this Preset Button?",
+    msgResetConfirm: "Reset to factory defaults?", msgNoData: "No data!", msgEditOn: "Edit Mode ON", msgEditOff: "Edit Mode OFF"
+  },
+  hi: {
+    appTitle: "लकड़ी बिलिंग प्रो", btnBack: "पीछे", langBtn: "English",
+    btnToday: "आज", btnExport: "CSV डाउनलोड", lockedMsg: "🔒 केवल पढ़ें: पुराने रिकॉर्ड लॉक हैं।",
+    menuQuick: "त्वरित बिल", menuManual: "मैनुअल एंट्री", menuBatta: "बट्टा कैलकुलेटर", menuNotes: "दैनिक नोट्स", menuSettings: "सेटिंग्स और बटन",
+    tableTitle: "आज के बिल रिकॉर्ड", selSelect: "चयनित", selTotal: "कुल", selPrice: "मूल्य",
+    thTime: "समय", thItem: "आइटम/वजन", thPrice: "मूल्य", thAct: "कार्य", quickHint: "बिल में कई आइटम जोड़ने के लिए बार-बार टैप करें।",
+    phItem: "आइटम / वजन (उदा. 10kg)", phPrice: "मूल्य (₹)", btnAddBill: "बिल में जोड़ें",
+    phLen: "लंबाई(ft)", phWid: "चौड़ाई(in)", phThick: "मोटाई(in)", phQty: "मात्रा(Pcs)", phRate: "दर/Cft", btnCalc: "गणना करें और जोड़ें",
+    phNote: "नया नोट लिखें...", btnSavePreset: "बटन सेव करें", titleCreate: "नया बटन बनाएं", phWeight: "वजन (KG)", titleManage: "बटन प्रबंधित करें", btnDelSpec: "विशिष्ट बटन हटाएं", btnReset: "सभी बटन रीसेट करें",
+    noRecords: "इस तारीख के लिए कोई रिकॉर्ड नहीं", noNotes: "अभी तक कोई नोट नहीं...",
+    msgLocked: "लॉक: आज की तारीख पर जाएं", msgAdded: "बिल में जोड़ा गया!", msgErrVal: "कृपया आइटम/वजन और मूल्य दर्ज करें",
+    msgErrBatta: "कृपया सही लंबाई, चौड़ाई, मोटाई, दर और मात्रा दर्ज करें।", msgPresetSaved: "बटन सेव हो गया!",
+    msgErrPreset: "कृपया वजन और मूल्य दर्ज करें", msgNoteSaved: "नोट सेव हो गया!", msgDelNote: "क्या यह नोट हटाएं?",
+    msgDelEntry: "क्या यह एंट्री हटाएं?", msgDelSelected: "चयनित एंट्री हटाएं?", msgDelPreset: "क्या यह बटन हटाएं?",
+    msgResetConfirm: "क्या सभी बटन रीसेट करें?", msgNoData: "कोई डेटा नहीं!", msgEditOn: "एडिट मोड चालू", msgEditOff: "एडिट मोड बंद"
+  }
+};
+
+let currentLang = localStorage.getItem('lakdiLang') || 'en';
+let currentPageTitleKey = 'appTitle';
+
+function t(key) { return i18n[currentLang][key] || key; }
+
+function toggleLanguage() {
+  currentLang = currentLang === 'en' ? 'hi' : 'en';
+  localStorage.setItem('lakdiLang', currentLang);
+  applyLanguage();
+}
+
+function applyLanguage() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      el.innerText = t(key);
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+      const key = el.getAttribute('data-i18n-ph');
+      el.placeholder = t(key);
+  });
+  document.getElementById('page-title').innerText = t(currentPageTitleKey);
+  loadDataForDate(currentDate); 
+}
+
+function openPage(pageId, titleKey) { 
+  currentPageTitleKey = titleKey;
+  window.history.pushState({ page: pageId }, ""); 
+  document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active')); 
+  document.getElementById(pageId).classList.add('active'); 
+  document.getElementById('back-btn').style.display = 'block'; 
+  document.getElementById('page-title').innerText = t(titleKey); 
+}
+
+function goHome(isBackButton = false) { 
+  currentPageTitleKey = 'appTitle';
+  if (!isBackButton) window.history.pushState({ page: 'home' }, "");
+  document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active')); 
+  document.getElementById('page-home').classList.add('active'); 
+  document.getElementById('back-btn').style.display = 'none'; 
+  document.getElementById('page-title').innerText = t(currentPageTitleKey); 
+  if(isEditMode) toggleEditMode(); 
+  loadDataForDate(currentDate); 
+}
+
+window.onpopstate = function(event) {
+  if (!document.getElementById('page-home').classList.contains('active')) {
+    goHome(true);
+  }
+};
+let defaultButtons = [ {kg:5, price:30}, {kg:5, price:40}, {kg:10, price:60}, {kg:10, price:80}, {kg:15, price:90}, {kg:15, price:120}, {kg:20, price:120}, {kg:20, price:160}, {kg:25, price:150}, {kg:25, price:200}, {kg:30, price:180}, {kg:30, price:240}, {kg:40, price:240}, {kg:40, price:320} ];
+function getLocalTodayDate() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+let todayStr = getLocalTodayDate(); let currentDate = todayStr; let isEditMode = false;
+let appData = {}; let savedButtons = []; let dailyNotes = {}; 
+
+try { appData = JSON.parse(localStorage.getItem("lakdiData")) || {}; savedButtons = JSON.parse(localStorage.getItem("lakdiButtons")) || defaultButtons; dailyNotes = JSON.parse(localStorage.getItem("lakdiDailyNotes")) || {}; } catch (e) { savedButtons = defaultButtons; }
+
+function renderButtons() {
+  const grid = document.getElementById("buttonGrid"); 
+  if (!grid) return;
+  grid.innerHTML = "";
+  savedButtons.forEach((btn, index) => {
+    let buttonEl = document.createElement("button"); buttonEl.className = "sale-btn";
+    buttonEl.onclick = function() { if(!isEditMode) { addSale(btn.kg, btn.price); } };
+    buttonEl.innerHTML = `<span class="kg">${btn.kg} Kg</span><span class="price">₹${btn.price}</span><div class="delete-preset" onclick="removeButton(${index}); event.stopPropagation();">✕</div>`;
+    grid.appendChild(buttonEl);
+  });
+}
+
+function addSale(kg, price) { if(currentDate !== todayStr) { showToast(t('msgLocked')); return; } if(!appData[currentDate]) appData[currentDate] = []; let time = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' }); appData[currentDate].unshift({ time: time, kg: kg, price: price }); saveData(); showToast(t('msgAdded')); }
+
+function addManualEntry() { if(currentDate !== todayStr) return; let kg = document.getElementById("manualKg").value; let price = document.getElementById("manualPrice").value; if(kg && price) { addSale(kg, price); document.getElementById("manualKg").value = ""; document.getElementById("manualPrice").value = ""; goHome(); } else { alert(t('msgErrVal')); } }
+
+function addTimberEntry() { if(currentDate !== todayStr) return; let l = parseFloat(document.getElementById("tLen").value); let w = parseFloat(document.getElementById("tWid").value); let t = parseFloat(document.getElementById("tThick").value); let q = parseInt(document.getElementById("tQty").value); let r = parseFloat(document.getElementById("tRate").value); if(l && w && t && r && q > 0) { let cft = (l * w * t * q) / 144; let price = Math.round(cft * r); let description = `Batta ${q}pc (${l}'x${w}"x${t}") [${cft.toFixed(2)} Cft]`; addSale(description, price); document.getElementById("tLen").value = ""; document.getElementById("tWid").value = ""; document.getElementById("tThick").value = ""; document.getElementById("tQty").value = ""; document.getElementById("tRate").value = ""; goHome(); } else { alert(t('msgErrBatta')); } }
+
+function createCustomButton() { let kg = document.getElementById("createKg").value; let price = document.getElementById("createPrice").value; if (kg && price) { savedButtons.push({ kg: parseInt(kg), price: parseInt(price) }); localStorage.setItem("lakdiButtons", JSON.stringify(savedButtons)); renderButtons(); document.getElementById("createKg").value = ""; document.getElementById("createPrice").value = ""; showToast(t('msgPresetSaved')); } else { alert(t('msgErrPreset')); } }
+
+function addDailyNote() { if(currentDate !== todayStr) return; let input = document.getElementById("newNoteInput"); let val = input.value.trim(); if(val) { if(!Array.isArray(dailyNotes[currentDate])) dailyNotes[currentDate] = []; dailyNotes[currentDate].push(val); localStorage.setItem("lakdiDailyNotes", JSON.stringify(dailyNotes)); input.value = ""; renderNotesList(dailyNotes[currentDate], true); showToast(t('msgNoteSaved')); } }
+
+function deleteNote(index) { if(currentDate !== todayStr) return; if(confirm(t('msgDelNote'))) { dailyNotes[currentDate].splice(index, 1); localStorage.setItem("lakdiDailyNotes", JSON.stringify(dailyNotes)); renderNotesList(dailyNotes[currentDate], true); } }
+
+function renderNotesList(notesArray, isToday) { const listEl = document.getElementById("notesListDisplay"); if (!listEl) return; listEl.innerHTML = ""; if(!notesArray || notesArray.length === 0) { listEl.innerHTML = `<li style='opacity:0.5; font-size:13px; text-align:center; padding: 15px;'>${t('noNotes')}</li>`; return; } notesArray.forEach((note, index) => { let delBtn = isToday ? `<button class="delete-note-btn" onclick="deleteNote(${index})">❌</button>` : ""; let li = document.createElement("li"); li.className = "note-item"; li.innerHTML = `<span>- ${note}</span> ${delBtn}`; listEl.appendChild(li); }); }
+
+function loadDataForDate(date) {
+  const sumBar = document.getElementById("selectionSummary");
+  const selectAll = document.getElementById("selectAllCheckbox");
+  if(sumBar) sumBar.style.display = "none"; 
+  if(selectAll) selectAll.checked = false;
+
+  const tbody = document.getElementById("recordsBody"); 
+  if(!tbody) return;
+  tbody.innerHTML = ""; 
+  let records = appData[date] || []; 
+  let notesData = dailyNotes[date] || []; 
+  if (typeof notesData === 'string') notesData = [notesData]; 
+  let isToday = (date === todayStr); 
+  renderNotesList(notesData, isToday); 
+  
+  const lockMsg = document.getElementById("lockedMessage"); 
+  const menuGrid = document.getElementById("menuGrid"); 
+  const todayBtn = document.getElementById("todayBtn"); 
+  
+  if(isToday) { 
+    if(lockMsg) lockMsg.style.display = "none"; 
+    if(todayBtn) todayBtn.style.display = "none"; 
+    if(menuGrid) menuGrid.classList.remove("disabled-area"); 
+  } else { 
+    if(lockMsg) lockMsg.style.display = "block"; 
+    if(todayBtn) todayBtn.style.display = "flex"; 
+    if(menuGrid) menuGrid.classList.add("disabled-area"); 
+  } 
+
+  if (records.length === 0) { 
+    tbody.innerHTML = `<tr><td colspan='5' style='padding:30px; opacity:0.6; text-align:center; font-size:13px;'>${t('noRecords')}</td></tr>`; 
+  } else { 
+    records.forEach((item, index) => { 
+      let checkboxHtml = `<input type="checkbox" class="row-checkbox" value="${index}" onchange="updateSelectedTotals()">`; 
+      let deleteAction = isToday ? `<button class="delete-row-btn" onclick="deleteEntry(${index})">❌</button>` : `🔒`; 
+      let row = `<tr id="row-${index}"><td>${checkboxHtml}</td><td>${item.time}</td><td>${item.kg}</td><td class="text-right">₹${item.price}</td><td class="text-center">${deleteAction}</td></tr>`; 
+      tbody.innerHTML += row; 
+    }); 
+  } 
+}
+
+function toggleSelectAll() { let isChecked = document.getElementById("selectAllCheckbox").checked; document.querySelectorAll(".row-checkbox").forEach(cb => { cb.checked = isChecked; highlightRow(cb); }); updateSelectedTotals(); }
+function highlightRow(checkbox) { let row = document.getElementById(`row-${checkbox.value}`); if(row) checkbox.checked ? row.classList.add('selected') : row.classList.remove('selected'); }
+function updateSelectedTotals() { let checkedBoxes = document.querySelectorAll(".row-checkbox:checked"); let summaryDiv = document.getElementById("selectionSummary"); if(!summaryDiv) return; if(checkedBoxes.length === 0) { summaryDiv.style.display = "none"; document.getElementById("selectAllCheckbox").checked = false; return; } summaryDiv.style.display = "flex"; let totalPrice = 0; let totalPcs = 0; let totalCft = 0; let totalKg = 0; let records = appData[currentDate] || []; checkedBoxes.forEach(cb => { let index = parseInt(cb.value); let item = records[index]; totalPrice += parseFloat(item.price) || 0; let kgStr = String(item.kg); if(kgStr.includes("Batta")) { let pcMatch = kgStr.match(/(\d+)pc/); if(pcMatch) totalPcs += parseInt(pcMatch[1]); let cftMatch = kgStr.match(/\[([\d.]+)\s*Cft\]/); if(cftMatch) totalCft += parseFloat(cftMatch[1]); } else { totalKg += parseFloat(kgStr) || 0; } }); document.getElementById("selCount").innerText = checkedBoxes.length; document.getElementById("selPrice").innerText = totalPrice; let qtyTextArr = []; if(totalPcs > 0) qtyTextArr.push(`${totalPcs} Pcs`); if(totalCft > 0) qtyTextArr.push(`${totalCft.toFixed(2)} Cft`); if(totalKg > 0) qtyTextArr.push(`${totalKg} Kg`); document.getElementById("selQty").innerText = qtyTextArr.length > 0 ? qtyTextArr.join(" | ") : "-"; }
+
+function deleteEntry(index) { if(currentDate !== todayStr) return; if(confirm(t('msgDelEntry'))) { appData[currentDate].splice(index, 1); saveData(); loadDataForDate(currentDate); } }
+function deleteSelectedEntries() { if(currentDate !== todayStr) return; let checkedBoxes = document.querySelectorAll(".row-checkbox:checked"); if(checkedBoxes.length === 0) return; if(confirm(t('msgDelSelected'))) { let indicesToDelete = Array.from(checkedBoxes).map(cb => parseInt(cb.value)).sort((a, b) => b - a); indicesToDelete.forEach(index => appData[currentDate].splice(index, 1)); saveData(); loadDataForDate(currentDate); showToast(t('msgAdded')); } }
+function removeButton(index) { if(confirm(t('msgDelPreset'))) { savedButtons.splice(index, 1); localStorage.setItem("lakdiButtons", JSON.stringify(savedButtons)); renderButtons(); } }
+function resetButtons() { if(confirm(t('msgResetConfirm'))) { localStorage.removeItem("lakdiButtons"); location.reload(); } }
+function saveData() { localStorage.setItem("lakdiData", JSON.stringify(appData)); }
+function changeDate() { currentDate = document.getElementById("datePicker").value; loadDataForDate(currentDate); }
+function goToToday() { currentDate = todayStr; document.getElementById("datePicker").value = currentDate; loadDataForDate(currentDate); }
+function toggleEditMode() { isEditMode = !isEditMode; document.body.classList.toggle("edit-mode"); if(isEditMode) openPage('page-quick', 'titleManage'); else showToast(t('msgEditOff')); }
+function showToast(msg) { let x = document.getElementById("toast"); if(!x) return; x.innerText = msg; x.classList.remove("show"); void x.offsetWidth; x.classList.add("show"); }
+function exportData() { let records = appData[currentDate] || []; let notes = dailyNotes[currentDate] || []; if(records.length === 0 && notes.length === 0) { alert(t('msgNoData')); return; } let csvContent = "data:text/csv;charset=utf-8,Time,Item/Weight,Price/Note\n"; records.forEach(row => { csvContent += `${row.time},"${row.kg}","${row.price}"\n`; }); let totPrice = records.reduce((a, b) => a + (parseFloat(b.price) || 0), 0); csvContent += `\nTOTAL,,${totPrice}`; if(notes.length > 0) { csvContent += `\n\n--- DAILY NOTES ---\n`; notes.forEach(n => { csvContent += `"${n.replace(/"/g, '""')}"\n`; }); } const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", `Lakdi_Billing_${currentDate}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+
+// INITIALIZE
+document.getElementById('datePicker').value = currentDate; 
+window.history.replaceState({ page: 'home' }, "");
+applyLanguage();
+renderButtons();
+
+if ('serviceWorker' in navigator) { 
+  navigator.serviceWorker.register('service-worker.js').catch(err => console.log(err)); 
+}
+ </script>
+
+</body>
+</html>
