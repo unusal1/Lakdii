@@ -1,8 +1,8 @@
 const CACHE_NAME = 'lakdi-billing-v8';
 const ASSETS_TO_CACHE = [
   './',
-  './index.html',
-  './manifest.json',
+  'index.html',
+  'manifest.json',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];
 
