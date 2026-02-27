@@ -1,9 +1,8 @@
-const CACHE_NAME = 'lakdi-billing-v8';
+const CACHE_NAME = 'lakdi-billing-v9';
 const ASSETS_TO_CACHE = [
   './',
-  'index.html',
-  'manifest.json',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
+  './index.html',
+  './manifest.json'
 ];
 
 // Install Service Worker
@@ -11,7 +10,9 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(ASSETS_TO_CACHE).catch(err => {
+        console.log('Cache addAll error:', err);
+      });
     })
   );
 });
@@ -31,7 +32,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
+      return cachedResponse || fetch(event.request).catch(() => {
+        return new Response('Offline', { status: 503 });
+      });
     })
   );
 });
